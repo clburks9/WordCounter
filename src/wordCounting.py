@@ -156,7 +156,7 @@ class WordCounter:
 			answers = np.append(answers,ans); 
 			percentages = np.append(percentages,per); 
 
-			print(words); 
+			#print(words); 
 
 			f = h5py.File(self.pathName,'w'); 
 
