@@ -102,13 +102,13 @@ class WordCounter:
 			self.experimentStopper(); 
 		print(""); 
 		print("");
-		if(ans.lower() == 'y'):
+		if(ans.lower() == 'y' or ans == '.'):
 			return True; 
 		else:
 			return False; 
 
 
-	def statsUpdate(self,ans):
+	def findPer(self,ans):
 		f = h5py.File(self.pathName,'r+');  
 		answers = np.array(f['answers']);
 		f.close(); 
@@ -139,7 +139,7 @@ class WordCounter:
 			ans = self.askWord(word); 
 			
 			#do the statistical analysis
-			per = self.statsUpdate(ans); 
+			per = self.findPer(ans); 
 
 			#write all the data to the file
 			f = h5py.File(self.pathName,'r+');
@@ -155,6 +155,8 @@ class WordCounter:
 			indexes = np.append(indexes,index); 
 			answers = np.append(answers,ans); 
 			percentages = np.append(percentages,per); 
+
+			print(words); 
 
 			f = h5py.File(self.pathName,'w'); 
 
@@ -184,6 +186,11 @@ if __name__ == "__main__":
 	tester = WordCounter(); 
 	tester.runTest(); 
 
+	# f = h5py.File("../data/subjectData/luke.hdf5",'r');
+	# print(np.array(f['words']));
+	# print(np.array(f['answers']));
+	# print(np.array(f['indexes']));
+	# print(np.array(f['percentages']));
 
 
 
