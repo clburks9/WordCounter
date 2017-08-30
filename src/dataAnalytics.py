@@ -26,6 +26,7 @@ import sys
 import numpy as np
 import signal
 import matplotlib.pyplot as plt
+from scipy.stats import norm
 
 __author__ = "Luke Burks"
 __license__ = "GPL"
@@ -50,7 +51,9 @@ def grabData():
 	totalYes = 0; 
 	totalNo = 0; 
 	total = 0; 
-	z = 1.96; 
+	alpha = 0.05; 
+	z = norm.ppf(1-.5*alpha)  
+
 	for a in ans:
 		total +=1; 
 		if(int(a)==0):
