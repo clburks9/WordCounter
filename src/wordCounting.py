@@ -26,6 +26,7 @@ import h5py
 import sys
 import numpy as np
 import signal
+import time
 
 __author__ = "Luke Burks"
 __license__ = "GPL"
@@ -35,19 +36,35 @@ __email__ = "clburks9@gmail.com"
 __status__ = "Development"
 
 
+class _GetchUnix:
+	def __init__(self):
+		import tty,sys; 
+	def __call__(self):
+		import sys,tty,termios
+		fd = sys.stdin.fileno(); 
+		old_settings = termios.tcgetattr(fd); 
+		try:
+			tty.setraw(sys.stdin.fileno()); 
+			ch = sys.stdin.read(1); 
+		finally:
+			termios.tcsetattr(fd,termios.TCSADRAIN,old_settings); 
+		return ch; 
+
+
 
 class WordCounter:
 
 	def __init__(self):
 		self.exitFlag = False; 
-
+		self.getch = _GetchUnix(); 
 		signal.signal(signal.SIGINT, self.signal_handler);
 		self.loadSubjectData(); 
 
 	def loadSubjectData(self):
 		#get user ID
 		self.sID = str(raw_input("Please input your subject ID:")); 
-		
+		print("Press Q at any time to exit the experiment."); 
+		print("Use > and < to enter yes and no respectively."); 
 		#Check if subject has an existing profile
 		pathName = "../data/subjectData/{}.hdf5".format(self.sID);
 		if(os.path.exists(pathName)):
@@ -65,6 +82,7 @@ class WordCounter:
 				f.create_dataset("indexes",(0,),maxshape=(None,)); 
 				f.create_dataset("answers",(0,),maxshape=(None,));
 				f.create_dataset("percentages",(0,),maxshape=(None,)); 
+				f.create_dataset("times",(0,),maxshape=(None,)); 
 				f.close();
 				self.pathName = pathName;  
 			else:
@@ -96,16 +114,23 @@ class WordCounter:
 
 	def askWord(self,word):
 		ans = 'n'; 
-		try:
-			ans = str(raw_input(word + ('\n'))); 
-		except(RuntimeError):
-			self.experimentStopper(); 
-		print(""); 
-		print("");
+		# try:
+		# 	ans = str(raw_input(word + ('\n'))); 
+		# except(RuntimeError):
+		# 	self.experimentStopper(); 
+		print(word + '\n'); 
+		startTime = time.time(); 
+		ans = str(self.getch());
+		timeElapsed = time.time()-startTime; 
+		#print(""); 
+		#print("");
 		if(ans.lower() == 'y' or ans == '.'):
-			return True; 
+			return [True,timeElapsed]; 
+		if(ans.lower() == 'q'):
+			self.exitFlag = True; 
+			self.experimentStopper(); 
 		else:
-			return False; 
+			return [False,timeElapsed]; 
 
 
 	def findPer(self,ans):
@@ -136,7 +161,7 @@ class WordCounter:
 			[index,word] = self.getWord();
 
 			#ask the subject if they know that word
-			ans = self.askWord(word); 
+			[ans,time] = self.askWord(word); 
 			
 			#do the statistical analysis
 			per = self.findPer(ans); 
@@ -147,7 +172,7 @@ class WordCounter:
 			indexes = np.array(f['indexes']); 
 			answers = np.array(f['answers']);
 			percentages = np.array(f['percentages']);  
-			 
+			times = np.array(f['times']); 
 
 			os.remove(self.pathName); 
 
@@ -155,6 +180,7 @@ class WordCounter:
 			indexes = np.append(indexes,index); 
 			answers = np.append(answers,ans); 
 			percentages = np.append(percentages,per); 
+			times = np.append(times,time); 
 
 			#print(words); 
 
@@ -164,6 +190,7 @@ class WordCounter:
 			f.create_dataset("indexes",data = indexes); 
 			f.create_dataset("answers",data = answers);
 			f.create_dataset("percentages",data = percentages); 
+			f.create_dataset("times",data=times);
 			f.close();
 
 
@@ -186,6 +213,7 @@ if __name__ == "__main__":
 	tester = WordCounter(); 
 	tester.runTest(); 
 
+
 	# f = h5py.File("../data/subjectData/luke.hdf5",'r');
 	# print(np.array(f['words']));
 	# print(np.array(f['answers']));
@@ -193,4 +221,14 @@ if __name__ == "__main__":
 	# print(np.array(f['percentages']));
 
 
+	rm
+	# import Tkinter
+	# import tkMessageBox
+
+	# top = Tkinter.Tk(); 
+	# B = Tkinter.Button(top,text="button1"); 
+	# C = Tkinter.Button(top,text="button2"); 
+	# B.pack(); 
+	# C.pack(); 
+	# top.mainloop(); 
 
